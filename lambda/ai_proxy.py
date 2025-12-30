@@ -80,10 +80,9 @@ def handle_ai_response(arguments):
     start_time = time.time()
 
     try:
-        # Invoke Virginia AI Lambda
+        # Invoke Virginia AI Lambda with 'message' key for chatbot
         response = invoke_virginia_lambda({
-            'action': 'query',
-            'prompt': prompt
+            'message': prompt
         })
 
         processing_time = time.time() - start_time
@@ -189,11 +188,9 @@ def handle_chat(arguments):
         return {'error': 'Message is required'}
 
     try:
-        # Invoke Virginia AI Lambda
+        # Invoke Virginia AI Lambda with 'message' key for chatbot
         response = invoke_virginia_lambda({
-            'action': 'chat',
-            'message': message,
-            'sessionId': session_id
+            'message': message
         })
 
         return {
@@ -236,6 +233,13 @@ def invoke_virginia_lambda(payload):
 
         response_payload = json.loads(response['Payload'].read().decode('utf-8'))
         logger.info(f"Virginia Lambda response: {json.dumps(response_payload)}")
+
+        # Parse body if response has statusCode/body structure
+        if 'body' in response_payload:
+            body = response_payload.get('body', '{}')
+            if isinstance(body, str):
+                return json.loads(body)
+            return body
 
         return response_payload
 
